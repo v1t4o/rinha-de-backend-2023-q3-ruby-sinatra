@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+puts '== Instalando dependências =='
+system 'gem install bundler --conservative'
+system('bundle check') || system('bundle install')
+
+require 'pg'
+
+puts '== Preparando banco de dados =='
+
+begin
+  db = PG::connect(host: '172.20.0.2', dbname: 'postgres', user: 'oudrikandalarrai', password: 'oudrikandalarrai')
+
+  db.exec 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp"'
+
+  db.exec <<~SQL
+    CREATE TABLE if not exists pessoas(
+      id uuid DEFAULT uuid_generate_v4 (),
+      apelido varchar(32) UNIQUE NOT NULL,
+      nome varchar(100) NOT NULL,
+      nascimento varchar (10) NOT NULL,
+      stack varchar(32)[],
+      PRIMARY KEY (id)
+    );
+  SQL
+
+  puts '== Banco de Dados preparado =='
+rescue PG::Error => e
+  puts e
+ensure
+  db.close if db
+end
